@@ -25,15 +25,23 @@ export class AuthService {
 
   getAccessToken(): string | null { return this.sessionSubject.value?.access_token ?? null; }
 
-  async signUp(email: string, password: string, username: string) {
-    return this.supabase.auth.signUp({ email, password, options: { data: { username } } });
+  isLoggedIn(): boolean { return this.sessionSubject.value !== null; }
+
+  async signUp(email: string, password: string, username: string): Promise<void> {
+    const { error } = await this.supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username } }
+    });
+    if (error) throw error;
   }
 
-  async signIn(email: string, password: string) {
-    return this.supabase.auth.signInWithPassword({ email, password });
+  async signIn(email: string, password: string): Promise<void> {
+    const { error } = await this.supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
   }
 
-  async signOut() {
-    return this.supabase.auth.signOut();
+  async signOut(): Promise<void> {
+    await this.supabase.auth.signOut();
   }
 }

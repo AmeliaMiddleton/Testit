@@ -50,6 +50,20 @@ export class GameStateService {
   // ─── Level initialisation ─────────────────────────────────────────────────
 
   /**
+   * Alias for initLevel that accepts an options object — used by GameComponent.
+   */
+  init(levelData: LevelData, opts: { bombs: number; hammers: number }): void {
+    this.initLevel(levelData, opts.bombs, opts.hammers);
+  }
+
+  /**
+   * Reset the game state (called on component destroy).
+   */
+  reset(): void {
+    this.stateSubject.next(null);
+  }
+
+  /**
    * Build a fresh GameState from the given LevelData and powerup counts.
    */
   initLevel(levelData: LevelData, bombs: number, hammers: number): void {

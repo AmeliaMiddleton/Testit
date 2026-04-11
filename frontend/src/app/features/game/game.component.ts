@@ -57,6 +57,7 @@ type Powerup   = 'bomb' | 'hammer' | null;
         <!-- Canvas -->
         <div class="canvas-area">
           <app-hex-canvas
+            [levelData]="levelData"
             [gameState]="gameState.state"
             (tileClicked)="onTileClicked($event)">
           </app-hex-canvas>
@@ -88,7 +89,7 @@ type Powerup   = 'bomb' | 'hammer' | null;
         <!-- Powerup hint banner -->
         <div class="pu-hint" *ngIf="activePowerup">
           <span *ngIf="activePowerup === 'bomb'">💣 Tap a tile to destroy it!</span>
-          <span *ngIf="activePowerup === 'hammer'">🔨 Tap a blocker tile to remove it!</span>
+          <span *ngIf="activePowerup === 'hammer'">🔨 Tap a tile to rotate its direction!</span>
           <button class="pu-cancel" (click)="togglePowerup(activePowerup!)">Cancel</button>
         </div>
 
@@ -647,7 +648,7 @@ export class GameComponent implements OnInit, OnDestroy {
       levelId:   this.levelId,
       completed,
       stars:     completed ? this.calcStars() : 0,
-      bestMoves: state.movesLeft
+      movesUsed: (this.levelData?.maxMoves ?? 0) - state.movesLeft
     };
 
     this.api.post('/api/progress', payload).subscribe({

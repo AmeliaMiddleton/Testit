@@ -423,6 +423,6 @@ export class MenuComponent implements OnInit {
 
   onSignOut(): void {
     this.auth.signOut();
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/login']);
   }
 }
