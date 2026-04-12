@@ -91,59 +91,57 @@ export class GameStateService {
   // ─── Movement ─────────────────────────────────────────────────────────────
 
   /**
-   * Try to move the tile at (q, r) one step in its direction.
+   * Slide the tile at (q, r) in its direction until it exits the board or
+   * is blocked by another tile.
    *
-   * Returns:
-   *   'moved'   – tile slid to an adjacent empty board cell
-   *   'exited'  – tile moved off the board (removed from play)
-   *   'blocked' – the next cell is occupied by another tile
-   *   'invalid' – no tile at (q,r), or tile is a blocker
+   * Returns an object with:
+   *   result  – 'moved' | 'exited' | 'blocked' | 'invalid'
+   *   toQ/toR – final resting position for 'moved', or last board cell for 'exited'
    */
-  moveTile(q: number, r: number): 'moved' | 'exited' | 'blocked' | 'invalid' {
+  moveTile(q: number, r: number): { result: 'moved' | 'exited' | 'blocked' | 'invalid'; toQ: number; toR: number } {
     const gs = this.state;
-    if (!gs) return 'invalid';
+    if (!gs) return { result: 'invalid', toQ: q, toR: r };
 
     const key  = hexKey(q, r);
     const tile = gs.tiles.get(key);
 
     // No tile or blocker tile — cannot be moved
-    if (!tile || tile.isBlocker) return 'invalid';
+    if (!tile || tile.isBlocker) return { result: 'invalid', toQ: q, toR: r };
 
     const { dq, dr } = HEX_DIRS[tile.dir];
-    const nextQ = q + dq;
-    const nextR = r + dr;
-    const nextKey = hexKey(nextQ, nextR);
 
-    if (!gs.boardCells.has(nextKey)) {
-      // Tile slides off the board → remove it
-      const newTiles = new Map(gs.tiles);
-      newTiles.delete(key);
+    // Slide until the tile would leave the board or hit another tile
+    let curQ = q, curR = r;
 
-      this.stateSubject.next({
-        ...gs,
-        tiles:     newTiles,
-        movesLeft: gs.movesLeft - 1
-      });
-      return 'exited';
+    while (true) {
+      const nextQ   = curQ + dq;
+      const nextR   = curR + dr;
+      const nextKey = hexKey(nextQ, nextR);
+
+      if (!gs.boardCells.has(nextKey)) {
+        // Tile slides off the board — remove it
+        const newTiles = new Map(gs.tiles);
+        newTiles.delete(key);
+        this.stateSubject.next({ ...gs, tiles: newTiles, movesLeft: gs.movesLeft - 1 });
+        return { result: 'exited', toQ: curQ, toR: curR };
+      }
+
+      if (gs.tiles.has(nextKey)) {
+        // Next cell is occupied
+        if (curQ === q && curR === r) {
+          return { result: 'blocked', toQ: q, toR: r };
+        }
+        // Moved some steps before being blocked — place tile at curQ, curR
+        const newTiles = new Map(gs.tiles);
+        newTiles.delete(key);
+        newTiles.set(hexKey(curQ, curR), { ...tile, q: curQ, r: curR });
+        this.stateSubject.next({ ...gs, tiles: newTiles, movesLeft: gs.movesLeft - 1 });
+        return { result: 'moved', toQ: curQ, toR: curR };
+      }
+
+      curQ = nextQ;
+      curR = nextR;
     }
-
-    if (gs.tiles.has(nextKey)) {
-      // Adjacent cell is occupied
-      return 'blocked';
-    }
-
-    // Move tile to the adjacent empty board cell
-    const newTiles = new Map(gs.tiles);
-    newTiles.delete(key);
-    const movedTile: Tile = { ...tile, q: nextQ, r: nextR };
-    newTiles.set(nextKey, movedTile);
-
-    this.stateSubject.next({
-      ...gs,
-      tiles:     newTiles,
-      movesLeft: gs.movesLeft - 1
-    });
-    return 'moved';
   }
 
   // ─── Powerups ─────────────────────────────────────────────────────────────

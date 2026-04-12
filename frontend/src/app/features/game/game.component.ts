@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { GameStateService } from '../../core/services/game-state.service';
-import { LevelData, PlayerProfile, HEX_DIRS, hexKey } from '../../shared/models';
+import { LevelData, PlayerProfile, hexKey } from '../../shared/models';
 import { HexCanvasComponent } from '../../shared/hex-canvas/hex-canvas.component';
 
 type GamePhase = 'loading' | 'playing' | 'won' | 'lost' | 'error';
@@ -604,17 +604,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Normal move — capture tile before state changes
     const tile = this.gameState.state?.tiles.get(hexKey(q, r));
-    const { dq, dr } = tile ? HEX_DIRS[tile.dir] : { dq: 0, dr: 0 };
-    const nextQ = q + dq;
-    const nextR = r + dr;
 
-    const result = this.gameState.moveTile(q, r);
+    const { result, toQ, toR } = this.gameState.moveTile(q, r);
 
     if (result === 'exited') {
-      if (tile) this.hexCanvas?.animateExit(tile, q, r);
+      if (tile) this.hexCanvas?.animateExit(tile, q, r, toQ, toR);
       this.checkGameEnd();
     } else if (result === 'moved') {
-      if (tile) this.hexCanvas?.animateMove(tile, q, r, nextQ, nextR);
+      if (tile) this.hexCanvas?.animateMove(tile, q, r, toQ, toR);
       this.checkGameEnd();
     }
     // 'blocked' — no animation needed

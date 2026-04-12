@@ -215,24 +215,31 @@ export class HexCanvasComponent implements AfterViewInit, OnChanges, OnDestroy {
   /**
    * Animate a tile sliding from (fromQ,fromR) to (toQ,toR) — used for normal moves.
    * The tile's q/r are set to the destination so animatedKeys suppresses the static render.
+   * Duration scales with distance so multi-step slides feel natural.
    */
   animateMove(tile: Tile, fromQ: number, fromR: number, toQ: number, toR: number): void {
     const { hexSize, offsetX, offsetY } = this.bounds;
-    const fromPos = hexToPixel(fromQ, fromR, hexSize, offsetX, offsetY);
-    const toPos   = hexToPixel(toQ,   toR,   hexSize, offsetX, offsetY);
-    this.startAnimation({ ...tile, q: toQ, r: toR }, fromPos, toPos, () => {}, 180);
+    const steps    = Math.max(Math.abs(toQ - fromQ), Math.abs(toR - fromR));
+    const duration = 150 + steps * 60;
+    const fromPos  = hexToPixel(fromQ, fromR, hexSize, offsetX, offsetY);
+    const toPos    = hexToPixel(toQ,   toR,   hexSize, offsetX, offsetY);
+    this.startAnimation({ ...tile, q: toQ, r: toR }, fromPos, toPos, () => {}, duration);
   }
 
   /**
-   * Animate a tile sliding off the board. Projects 6 hex steps in the tile's
-   * direction so it travels clearly beyond the canvas edge.
+   * Animate a tile sliding off the board.
+   * fromQ/fromR  – where the tile started (where the user clicked).
+   * lastBoardQ/R – the last board cell before it exits, used to project
+   *                the exit destination a few hexes off the board edge.
    */
-  animateExit(tile: Tile, fromQ: number, fromR: number): void {
+  animateExit(tile: Tile, fromQ: number, fromR: number, lastBoardQ: number, lastBoardR: number): void {
     const { hexSize, offsetX, offsetY } = this.bounds;
     const { dq, dr } = HEX_DIRS[tile.dir];
-    const fromPos = hexToPixel(fromQ, fromR, hexSize, offsetX, offsetY);
-    const toPos   = hexToPixel(fromQ + dq * 6, fromR + dr * 6, hexSize, offsetX, offsetY);
-    this.startAnimation({ ...tile, q: fromQ, r: fromR }, fromPos, toPos, () => {}, 380);
+    const steps    = Math.max(Math.abs(lastBoardQ - fromQ), Math.abs(lastBoardR - fromR)) + 3;
+    const duration = 150 + steps * 70;
+    const fromPos  = hexToPixel(fromQ, fromR, hexSize, offsetX, offsetY);
+    const toPos    = hexToPixel(lastBoardQ + dq * 3, lastBoardR + dr * 3, hexSize, offsetX, offsetY);
+    this.startAnimation({ ...tile, q: fromQ, r: fromR }, fromPos, toPos, () => {}, duration);
   }
 
   private startLoop(): void {
