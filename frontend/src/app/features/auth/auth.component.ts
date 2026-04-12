@@ -73,7 +73,7 @@ import { AuthService } from '../../core/services/auth.service';
                 [(ngModel)]="loginEmail"
                 placeholder="you@example.com"
                 required
-                autocomplete="email"/>
+                autocomplete="off"/>
             </div>
 
             <div class="field-group">
@@ -87,7 +87,7 @@ import { AuthService } from '../../core/services/auth.service';
                   [(ngModel)]="loginPassword"
                   placeholder="••••••••"
                   required
-                  autocomplete="current-password"/>
+                  autocomplete="off"/>
                 <button type="button" class="toggle-pw" (click)="showPassword = !showPassword">
                   {{ showPassword ? '🙈' : '👁' }}
                 </button>
