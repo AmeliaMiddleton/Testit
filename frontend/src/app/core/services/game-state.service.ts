@@ -49,6 +49,14 @@ export class GameStateService {
 
   // ─── Level initialisation ─────────────────────────────────────────────────
 
+  reset(): void {
+    this.stateSubject.next(null);
+  }
+
+  init(levelData: LevelData, powerups: { bombs: number; hammers: number }): void {
+    this.initLevel(levelData, powerups.bombs, powerups.hammers);
+  }
+
   /**
    * Build a fresh GameState from the given LevelData and powerup counts.
    */

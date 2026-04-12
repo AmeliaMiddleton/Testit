@@ -1,0 +1,20 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+// Set these as environment variables on your hosting platform (NOT in a file):
+//
+//   Supabase__Url                  = https://your-project.supabase.co
+//   Supabase__AnonKey              = eyJ...
+//   Supabase__JwtSecret            = <JWT secret from Supabase dashboard → Settings → API>
+//   Supabase__ConnectionString     = postgresql://postgres:<password>@db.<ref>.supabase.co:5432/postgres
+//   AllowedOrigins__0              = https://your-production-domain.com
+//
+// In Azure App Service: Configuration → Application Settings
+// In Railway / Render:  Environment Variables section
+// In Docker:            -e flag or docker-compose environment:

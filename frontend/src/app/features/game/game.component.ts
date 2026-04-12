@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { GameStateService } from '../../core/services/game-state.service';
-import { LevelData, PlayerProfile } from '../../shared/models';
+import { LevelData, PlayerProfile, HEX_DIRS, hexKey } from '../../shared/models';
 import { HexCanvasComponent } from '../../shared/hex-canvas/hex-canvas.component';
 
 type GamePhase = 'loading' | 'playing' | 'won' | 'lost' | 'error';
@@ -57,6 +57,7 @@ type Powerup   = 'bomb' | 'hammer' | null;
         <!-- Canvas -->
         <div class="canvas-area">
           <app-hex-canvas
+            [levelData]="levelData"
             [gameState]="gameState.state"
             (tileClicked)="onTileClicked($event)">
           </app-hex-canvas>
@@ -506,6 +507,8 @@ type Powerup   = 'bomb' | 'hammer' | null;
   `]
 })
 export class GameComponent implements OnInit, OnDestroy {
+  @ViewChild(HexCanvasComponent) hexCanvas?: HexCanvasComponent;
+
   levelId    = 0;
   phase: GamePhase = 'loading';
   profile: PlayerProfile | null = null;
@@ -514,7 +517,7 @@ export class GameComponent implements OnInit, OnDestroy {
   starsEarned = 0;
   coinsEarned = 0;
 
-  private levelData: LevelData | null = null;
+  levelData: LevelData | null = null;
 
   constructor(
     private route:     ActivatedRoute,
@@ -524,8 +527,13 @@ export class GameComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.levelId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadLevel();
+    this.route.paramMap.subscribe(params => {
+      this.levelId = Number(params.get('id'));
+      this.phase = 'loading';
+      this.activePowerup = null;
+      this.gameState.reset();
+      this.loadLevel();
+    });
   }
 
   ngOnDestroy(): void {
@@ -594,13 +602,22 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Normal move
+    // Normal move — capture tile before state changes
+    const tile = this.gameState.state?.tiles.get(hexKey(q, r));
+    const { dq, dr } = tile ? HEX_DIRS[tile.dir] : { dq: 0, dr: 0 };
+    const nextQ = q + dq;
+    const nextR = r + dr;
+
     const result = this.gameState.moveTile(q, r);
 
-    if (result === 'exited' || result === 'moved') {
+    if (result === 'exited') {
+      if (tile) this.hexCanvas?.animateExit(tile, q, r);
+      this.checkGameEnd();
+    } else if (result === 'moved') {
+      if (tile) this.hexCanvas?.animateMove(tile, q, r, nextQ, nextR);
       this.checkGameEnd();
     }
-    // 'blocked' — the canvas component handles the flash animation via state
+    // 'blocked' — no animation needed
   }
 
   private checkGameEnd(): void {

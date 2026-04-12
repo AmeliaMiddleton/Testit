@@ -5,7 +5,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+        opts.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -21,24 +23,51 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT Auth (Supabase uses HS256 with the JWT secret)
-var jwtSecret = builder.Configuration["Supabase:JwtSecret"] ?? throw new InvalidOperationException("JWT secret not configured");
+// JWT Auth — supports HS256 (plain string) or ES256 (JWK JSON string)
+var jwtSecretValue = builder.Configuration["Supabase:JwtSecret"]
+    ?? throw new InvalidOperationException("JWT secret not configured");
+
+SecurityKey signingKey = jwtSecretValue.TrimStart().StartsWith("{")
+    ? new Microsoft.IdentityModel.Tokens.JsonWebKey(jwtSecretValue)
+    : new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretValue));
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            IssuerSigningKey = signingKey,
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.FromMinutes(5)
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = ctx =>
+            {
+                Console.WriteLine($"[JWT] Auth failed: {ctx.Exception.GetType().Name}: {ctx.Exception.Message}");
+                return Task.CompletedTask;
+            }
         };
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<SupabaseService>();
+
+// Typed HttpClient for Supabase REST API (avoids IPv6/pooler issues with direct Postgres)
+builder.Services.AddHttpClient<SupabaseService>((sp, client) =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var url = (cfg["Supabase:Url"] ?? throw new InvalidOperationException("Supabase:Url not configured"))
+              .TrimEnd('/');
+    var anonKey = cfg["Supabase:AnonKey"] ?? throw new InvalidOperationException("Supabase:AnonKey not configured");
+
+    client.BaseAddress = new Uri(url + "/rest/v1/");
+    client.DefaultRequestHeaders.Add("apikey", anonKey);
+    client.DefaultRequestHeaders.Authorization =
+        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", anonKey);
+});
 
 var app = builder.Build();
 

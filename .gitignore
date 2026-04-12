@@ -9,11 +9,20 @@
 
 # Node modules and dependency files
 /node_modules/
+node_modules/
 /package-lock.json
 /yarn.lock
 
 # Environment files
 /.env
+
+# Backend secrets (use environment variables in production)
+backend/appsettings.Development.json
+backend/appsettings.Production.json
+
+# .NET user secrets and build output
+backend/bin/
+backend/obj/
 
 # Angular CLI and build artefacts
 /.angular-cli.json

@@ -80,6 +80,7 @@ export class HexCanvasComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private ctx!: CanvasRenderingContext2D;
   private rafId: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
   private animations: AnimationState[] = [];
   private bounds: BoardBounds = { hexSize: 40, offsetX: 0, offsetY: 0, diameter: 5 };
   private pulsePhase = 0;
@@ -92,7 +93,11 @@ export class HexCanvasComponent implements AfterViewInit, OnChanges, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
     this.resizeCanvas();
-    this.ngZone.runOutsideAngular(() => this.startLoop());
+    this.ngZone.runOutsideAngular(() => {
+      this.resizeObserver = new ResizeObserver(() => this.resizeCanvas());
+      this.resizeObserver.observe(canvas.parentElement ?? canvas);
+      this.startLoop();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -108,6 +113,7 @@ export class HexCanvasComponent implements AfterViewInit, OnChanges, OnDestroy {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
+    this.resizeObserver?.disconnect();
   }
 
   // ─── Window resize ────────────────────────────────────────────────────────
@@ -204,6 +210,29 @@ export class HexCanvasComponent implements AfterViewInit, OnChanges, OnDestroy {
       duration,
       onDone
     });
+  }
+
+  /**
+   * Animate a tile sliding from (fromQ,fromR) to (toQ,toR) — used for normal moves.
+   * The tile's q/r are set to the destination so animatedKeys suppresses the static render.
+   */
+  animateMove(tile: Tile, fromQ: number, fromR: number, toQ: number, toR: number): void {
+    const { hexSize, offsetX, offsetY } = this.bounds;
+    const fromPos = hexToPixel(fromQ, fromR, hexSize, offsetX, offsetY);
+    const toPos   = hexToPixel(toQ,   toR,   hexSize, offsetX, offsetY);
+    this.startAnimation({ ...tile, q: toQ, r: toR }, fromPos, toPos, () => {}, 180);
+  }
+
+  /**
+   * Animate a tile sliding off the board. Projects 6 hex steps in the tile's
+   * direction so it travels clearly beyond the canvas edge.
+   */
+  animateExit(tile: Tile, fromQ: number, fromR: number): void {
+    const { hexSize, offsetX, offsetY } = this.bounds;
+    const { dq, dr } = HEX_DIRS[tile.dir];
+    const fromPos = hexToPixel(fromQ, fromR, hexSize, offsetX, offsetY);
+    const toPos   = hexToPixel(fromQ + dq * 6, fromR + dr * 6, hexSize, offsetX, offsetY);
+    this.startAnimation({ ...tile, q: fromQ, r: fromR }, fromPos, toPos, () => {}, 380);
   }
 
   private startLoop(): void {

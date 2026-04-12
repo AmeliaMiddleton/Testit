@@ -493,44 +493,6 @@ VALUES (
   ]'
 );
 
--- ---------------------------------------------------------------------------
--- LEADERBOARD SEED DATA  (30 mock entries)
--- We insert directly into leaderboard.  These rows reference fake auth.users
--- UUIDs that would exist in a real deployment; adjust if seeding auth too.
--- ---------------------------------------------------------------------------
-
--- NOTE: leaderboard.user_id references auth.users(id).  In a local dev /
--- CI environment seed auth users first, or temporarily drop/defer the FK.
--- The UUIDs below are static so they can be referenced consistently.
-
-INSERT INTO leaderboard (user_id, username, avatar, weekly_score, total_score, league) VALUES
-  ('00000001-0000-0000-0000-000000000001', 'GageRay',     'fox',      9800, 142500, 'gold'),
-  ('00000001-0000-0000-0000-000000000002', 'AceRay',      'wolf',     9200, 138700, 'gold'),
-  ('00000001-0000-0000-0000-000000000003', 'RuneVale',    'owl',      8750, 131200, 'gold'),
-  ('00000001-0000-0000-0000-000000000004', 'NovaStar',    'bear',     8400, 125800, 'gold'),
-  ('00000001-0000-0000-0000-000000000005', 'ZephyrX',     'tiger',    8100, 119600, 'gold'),
-  ('00000001-0000-0000-0000-000000000006', 'LunaBlaze',   'fox',      7800, 114300, 'gold'),
-  ('00000001-0000-0000-0000-000000000007', 'TorqStorm',   'dragon',   7500, 108900, 'gold'),
-  ('00000001-0000-0000-0000-000000000008', 'IronMaze',    'bear',     7200, 102400, 'gold'),
-  ('00000001-0000-0000-0000-000000000009', 'CrystalFox',  'fox',      6900,  97100, 'gold'),
-  ('00000001-0000-0000-0000-000000000010', 'VexKnight',   'wolf',     6500,  91800, 'gold'),
-  ('00000001-0000-0000-0000-000000000011', 'Player187',   'bear',     5900,  84200, 'silver'),
-  ('00000001-0000-0000-0000-000000000012', 'StrikeOwl',   'owl',      5700,  79600, 'silver'),
-  ('00000001-0000-0000-0000-000000000013', 'HexMaster',   'dragon',   5400,  75100, 'silver'),
-  ('00000001-0000-0000-0000-000000000014', 'PrismWave',   'tiger',    5100,  70800, 'silver'),
-  ('00000001-0000-0000-0000-000000000015', 'DuskRider',   'wolf',     4900,  66300, 'silver'),
-  ('00000001-0000-0000-0000-000000000016', 'CometRush',   'fox',      4600,  62500, 'silver'),
-  ('00000001-0000-0000-0000-000000000017', 'BlazeQuill',  'bear',     4300,  58900, 'silver'),
-  ('00000001-0000-0000-0000-000000000018', 'GridBreaker', 'owl',      4100,  55200, 'silver'),
-  ('00000001-0000-0000-0000-000000000019', 'SkyForge',    'dragon',   3800,  51400, 'silver'),
-  ('00000001-0000-0000-0000-000000000020', 'TileKing',    'tiger',    3500,  47800, 'silver'),
-  ('00000001-0000-0000-0000-000000000021', 'PixelDuke',   'bear',     2900,  39600, 'bronze'),
-  ('00000001-0000-0000-0000-000000000022', 'RunnerUp99',  'wolf',     2700,  35100, 'bronze'),
-  ('00000001-0000-0000-0000-000000000023', 'StarNovice',  'fox',      2500,  31800, 'bronze'),
-  ('00000001-0000-0000-0000-000000000024', 'HexNinja',    'owl',      2300,  28400, 'bronze'),
-  ('00000001-0000-0000-0000-000000000025', 'CubeTapper',  'bear',     2100,  25200, 'bronze'),
-  ('00000001-0000-0000-0000-000000000026', 'TileSurfer',  'tiger',    1900,  22100, 'bronze'),
-  ('00000001-0000-0000-0000-000000000027', 'GridWalker',  'wolf',     1600,  18700, 'bronze'),
-  ('00000001-0000-0000-0000-000000000028', 'MazeRunner7', 'fox',      1400,  15400, 'bronze'),
-  ('00000001-0000-0000-0000-000000000029', 'HexPupil',    'bear',     1100,  11900, 'bronze'),
-  ('00000001-0000-0000-0000-000000000030', 'NewPlayer01', 'owl',       800,   8200, 'bronze');
+-- Leaderboard seed data removed — leaderboard.user_id has a FK to auth.users(id)
+-- so mock entries cannot be inserted without real auth users.
+-- The leaderboard will populate as real users play the game.

@@ -27,13 +27,34 @@ public class PlayerController : ControllerBase
         if (!TryGetUserId(out var userId))
             return Unauthorized(new { message = "Invalid or missing user identity." });
 
-        var profile = await _supabase.GetPlayerProfileAsync(userId);
+        try
+        {
+            var profile = await _supabase.GetPlayerProfileAsync(userId);
 
-        // Auto-create profile on first login
-        if (profile is null)
-            profile = await _supabase.CreatePlayerProfileAsync(userId);
+            // Auto-create profile on first login, seeding username from JWT metadata
+            if (profile is null)
+            {
+                var username = ExtractUsernameFromClaims() ?? "Player";
+                profile = await _supabase.CreatePlayerProfileAsync(userId, username);
+            }
+            // Backfill username for existing profiles still on the default "Player"
+            else if (profile.Username == "Player")
+            {
+                var username = ExtractUsernameFromClaims();
+                if (username is not null)
+                {
+                    var req = new UpdateProfileRequest { Username = username };
+                    profile = await _supabase.UpdatePlayerProfileAsync(userId, req) ?? profile;
+                }
+            }
 
-        return Ok(profile);
+            return Ok(profile);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] GetProfile failed for {userId}: {ex.GetType().Name}: {ex.Message}");
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 
     // PUT /api/player/profile
@@ -63,6 +84,21 @@ public class PlayerController : ControllerBase
     /// Reads the "sub" claim from the Supabase JWT and parses it as a <see cref="Guid"/>.
     /// Returns <c>false</c> when the claim is absent or not a valid GUID.
     /// </summary>
+    private string? ExtractUsernameFromClaims()
+    {
+        // Supabase stores signup metadata in the "user_metadata" JWT claim as a JSON string
+        var raw = User.FindFirst("user_metadata")?.Value;
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(raw);
+            if (doc.RootElement.TryGetProperty("username", out var u))
+                return u.GetString();
+        }
+        catch { /* malformed claim — fall through */ }
+        return null;
+    }
+
     private bool TryGetUserId(out Guid userId)
     {
         userId = Guid.Empty;

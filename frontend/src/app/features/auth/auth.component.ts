@@ -478,7 +478,11 @@ export class AuthComponent implements OnInit {
     this.errorMsg = '';
 
     try {
-      await this.auth.signIn(this.loginEmail, this.loginPassword);
+      const { error } = await this.auth.signIn(this.loginEmail, this.loginPassword);
+      if (error) {
+        this.errorMsg = error.message;
+        return;
+      }
       this.router.navigate(['/menu']);
     } catch (err: any) {
       this.errorMsg = err?.message ?? 'Login failed. Please check your credentials.';
@@ -504,9 +508,18 @@ export class AuthComponent implements OnInit {
     this.errorMsg = '';
 
     try {
-      await this.auth.signUp(this.regEmail, this.regPassword, this.regUsername);
-      this.successMsg = 'Account created! Redirecting…';
-      setTimeout(() => this.router.navigate(['/menu']), 800);
+      const { data, error } = await this.auth.signUp(this.regEmail, this.regPassword, this.regUsername);
+      if (error) {
+        this.errorMsg = error.message;
+        return;
+      }
+      if (data.session) {
+        this.successMsg = 'Account created! Redirecting…';
+        setTimeout(() => this.router.navigate(['/menu']), 800);
+      } else {
+        this.successMsg = 'Account created! Please check your email to confirm your account, then log in.';
+        setTimeout(() => this.switchTab('login'), 3000);
+      }
     } catch (err: any) {
       this.errorMsg = err?.message ?? 'Registration failed. Please try again.';
     } finally {

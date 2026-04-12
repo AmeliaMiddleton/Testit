@@ -10,7 +10,14 @@ export class AuthService {
   session$ = this.sessionSubject.asObservable();
 
   constructor() {
-    this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
+    this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
+      auth: {
+        lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn()
+      }
+    });
+    this.supabase.auth.getSession().then(({ data }) => {
+      this.sessionSubject.next(data.session);
+    });
     this.supabase.auth.onAuthStateChange((_, session) => {
       this.sessionSubject.next(session);
     });
@@ -23,6 +30,10 @@ export class AuthService {
 
   get currentUser(): User | null { return this.sessionSubject.value?.user ?? null; }
 
+  isLoggedIn(): boolean { return this.currentUser !== null; }
+
+  currentUserId(): string | null { return this.currentUser?.id ?? null; }
+
   getAccessToken(): string | null { return this.sessionSubject.value?.access_token ?? null; }
 
   async signUp(email: string, password: string, username: string) {
@@ -30,7 +41,11 @@ export class AuthService {
   }
 
   async signIn(email: string, password: string) {
-    return this.supabase.auth.signInWithPassword({ email, password });
+    const result = await this.supabase.auth.signInWithPassword({ email, password });
+    if (result.data.session) {
+      this.sessionSubject.next(result.data.session);
+    }
+    return result;
   }
 
   async signOut() {
