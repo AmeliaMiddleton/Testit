@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { LevelSummary, LevelProgress } from '../../shared/models';
 
 interface LevelCard {
@@ -24,7 +25,7 @@ interface LevelCard {
           <span>←</span> Menu
         </button>
         <h1 class="header-title">Select Level</h1>
-        <div class="header-spacer"></div>
+        <button class="logout-btn" (click)="onLogOut()" title="Log out">⏻</button>
       </header>
 
       <!-- Loading state -->
@@ -132,6 +133,27 @@ interface LevelCard {
 
     .back-btn:hover { background: rgba(255,255,255,0.18); }
 
+    .logout-btn {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.75);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(232,64,64,0.25);
+      color: #ff8888;
+      border-color: rgba(232,64,64,0.4);
+    }
+
     .header-title {
       font-size: 1.2rem;
       font-weight: 800;
@@ -140,7 +162,6 @@ interface LevelCard {
       letter-spacing: 0.5px;
     }
 
-    .header-spacer { width: 90px; }
 
     /* ── Loading skeletons ── */
     .loading-grid {
@@ -325,7 +346,8 @@ export class LevelSelectComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private api:    ApiService
+    private api:    ApiService,
+    private auth:   AuthService
   ) {}
 
   ngOnInit(): void {
@@ -376,6 +398,11 @@ export class LevelSelectComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/menu']);
+  }
+
+  onLogOut(): void {
+    this.auth.signOut();
+    this.router.navigate(['/auth']);
   }
 
   trackById(_: number, card: LevelCard): number {

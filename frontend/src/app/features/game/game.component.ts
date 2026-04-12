@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { GameStateService } from '../../core/services/game-state.service';
 import { LevelData, PlayerProfile, hexKey } from '../../shared/models';
 import { HexCanvasComponent } from '../../shared/hex-canvas/hex-canvas.component';
@@ -52,6 +53,8 @@ type Powerup   = 'bomb' | 'hammer' | null;
             <span class="coin-icon">🪙</span>
             <span class="hud-value">{{ profile?.coins ?? 0 }}</span>
           </div>
+
+          <button class="hud-logout" (click)="onLogOut()" title="Log out">⏻</button>
         </header>
 
         <!-- Canvas -->
@@ -216,6 +219,27 @@ type Powerup   = 'bomb' | 'hammer' | null;
     }
 
     .hud-back:hover { background: rgba(255,255,255,0.2); }
+
+    .hud-logout {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.75);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .hud-logout:hover {
+      background: rgba(232,64,64,0.25);
+      color: #ff8888;
+      border-color: rgba(232,64,64,0.4);
+    }
 
     .hud-center,
     .hud-moves,
@@ -523,6 +547,7 @@ export class GameComponent implements OnInit, OnDestroy {
     private route:     ActivatedRoute,
     private router:    Router,
     private api:       ApiService,
+    private auth:      AuthService,
     public  gameState: GameStateService
   ) {}
 
@@ -704,6 +729,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
   goMenu():  void { this.router.navigate(['/menu']);  }
   goShop():  void { this.router.navigate(['/shop']);  }
+
+  onLogOut(): void {
+    this.auth.signOut();
+    this.router.navigate(['/auth']);
+  }
 
   confirmBack(): void {
     if (this.phase === 'playing') {

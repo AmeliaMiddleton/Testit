@@ -34,18 +34,21 @@ interface CoinItem {
       <header class="shop-header">
         <button class="back-btn" (click)="goBack()">← Back</button>
         <h1 class="shop-title">SHOP</h1>
-        <div class="header-resources" *ngIf="profile">
-          <div class="res-chip coin-chip">
-            <span>🪙</span>
-            <span>{{ profile.coins | number }}</span>
+        <div class="header-right">
+          <div class="header-resources" *ngIf="profile">
+            <div class="res-chip coin-chip">
+              <span>🪙</span>
+              <span>{{ profile.coins | number }}</span>
+            </div>
+            <div class="res-chip heart-chip">
+              <span>❤️</span>
+              <span>5</span>
+            </div>
           </div>
-          <div class="res-chip heart-chip">
-            <span>❤️</span>
-            <span>5</span>
+          <div class="header-resources" *ngIf="!profile">
+            <div class="res-chip skeleton-chip"></div>
           </div>
-        </div>
-        <div class="header-resources" *ngIf="!profile">
-          <div class="res-chip skeleton-chip"></div>
+          <button class="logout-btn" (click)="onLogOut()" title="Log out">⏻</button>
         </div>
       </header>
 
@@ -186,6 +189,34 @@ interface CoinItem {
     }
 
     .back-btn:hover { background: rgba(255,255,255,0.18); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.75);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .logout-btn:hover {
+      background: rgba(232,64,64,0.25);
+      color: #ff8888;
+      border-color: rgba(232,64,64,0.4);
+    }
 
     .shop-title {
       font-size: 1.3rem;
@@ -620,6 +651,11 @@ export class ShopComponent implements OnInit {
   }
 
   goBack(): void { this.router.navigate(['/menu']); }
+
+  onLogOut(): void {
+    this.auth.signOut();
+    this.router.navigate(['/auth']);
+  }
 
   private showToast(msg: string): void {
     this.toastMsg = msg;

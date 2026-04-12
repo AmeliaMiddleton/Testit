@@ -14,9 +14,9 @@ import { PlayerProfile } from '../../shared/models';
 
       <!-- Top Bar -->
       <header class="top-bar">
-        <button class="sign-out-btn" (click)="onSignOut()" title="Sign out">
-          <span class="so-icon">←</span>
-          <span class="so-label">Exit</span>
+        <button class="sign-out-btn" (click)="onSignOut()" title="Log out">
+          <span class="so-icon">⏻</span>
+          <span class="so-label">Log Out</span>
         </button>
 
         <div class="top-resources" *ngIf="profile">
