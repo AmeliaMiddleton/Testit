@@ -28,7 +28,7 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
 
         <!-- Tab switcher -->
-        <div class="tab-bar">
+        <div class="tab-bar" *ngIf="activeTab !== 'forgot'">
           <button
             class="tab-btn"
             [class.active]="activeTab === 'login'"
@@ -40,6 +40,11 @@ import { AuthService } from '../../core/services/auth.service';
             [class.active]="activeTab === 'register'"
             (click)="switchTab('register')">
             Register
+          </button>
+        </div>
+        <div class="tab-bar back-bar" *ngIf="activeTab === 'forgot'">
+          <button class="tab-btn back-btn" (click)="switchTab('login')">
+            ← Back to Login
           </button>
         </div>
 
@@ -94,6 +99,36 @@ import { AuthService } from '../../core/services/auth.service';
               class="submit-btn"
               [disabled]="loading || !loginEmail || !loginPassword">
               <span *ngIf="!loading">Login</span>
+              <span *ngIf="loading" class="spinner"></span>
+            </button>
+
+            <div class="forgot-link">
+              <button type="button" class="link-btn" (click)="switchTab('forgot')">
+                Forgot your password?
+              </button>
+            </div>
+          </form>
+
+          <!-- Forgot Password Form -->
+          <form *ngIf="activeTab === 'forgot'" (ngSubmit)="onSubmitForgotPassword()" novalidate>
+            <p class="forgot-desc">Enter your email address and we'll send you a link to reset your password.</p>
+            <div class="field-group">
+              <label class="field-label" for="forgotEmail">Email</label>
+              <input
+                id="forgotEmail"
+                class="field-input"
+                type="email"
+                name="email"
+                [(ngModel)]="forgotEmail"
+                placeholder="you@example.com"
+                required
+                autocomplete="email"/>
+            </div>
+            <button
+              type="submit"
+              class="submit-btn"
+              [disabled]="loading || !forgotEmail">
+              <span *ngIf="!loading">Send Reset Link</span>
               <span *ngIf="loading" class="spinner"></span>
             </button>
           </form>
@@ -401,6 +436,48 @@ import { AuthService } from '../../core/services/auth.service';
       vertical-align: middle;
     }
 
+    /* ── Forgot password ── */
+    .back-bar {
+      background: transparent;
+      padding: 0;
+    }
+
+    .back-btn {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+    }
+
+    .back-btn:hover {
+      color: #fff;
+    }
+
+    .forgot-link {
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    .link-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      transition: color 0.2s;
+    }
+
+    .link-btn:hover {
+      color: #ffcc00;
+    }
+
+    .forgot-desc {
+      color: rgba(255,255,255,0.65);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin: 0 0 20px;
+    }
+
     /* ── Footer ── */
     .footer-note {
       color: rgba(255,255,255,0.38);
@@ -437,7 +514,7 @@ import { AuthService } from '../../core/services/auth.service';
   `]
 })
 export class AuthComponent implements OnInit {
-  activeTab: 'login' | 'register' = 'login';
+  activeTab: 'login' | 'register' | 'forgot' = 'login';
 
   // Login fields
   loginEmail    = '';
@@ -448,6 +525,9 @@ export class AuthComponent implements OnInit {
   regEmail    = '';
   regPassword = '';
   regConfirm  = '';
+
+  // Forgot password fields
+  forgotEmail = '';
 
   showPassword = false;
   loading      = false;
@@ -466,7 +546,7 @@ export class AuthComponent implements OnInit {
     }
   }
 
-  switchTab(tab: 'login' | 'register'): void {
+  switchTab(tab: 'login' | 'register' | 'forgot'): void {
     this.activeTab  = tab;
     this.errorMsg   = '';
     this.successMsg = '';
@@ -486,6 +566,26 @@ export class AuthComponent implements OnInit {
       this.router.navigate(['/menu']);
     } catch (err: any) {
       this.errorMsg = err?.message ?? 'Login failed. Please check your credentials.';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async onSubmitForgotPassword(): Promise<void> {
+    if (!this.forgotEmail) return;
+    this.loading  = true;
+    this.errorMsg = '';
+
+    try {
+      const { error } = await this.auth.resetPasswordForEmail(this.forgotEmail);
+      if (error) {
+        this.errorMsg = error.message;
+        return;
+      }
+      this.successMsg = 'Check your email — we sent you a password reset link!';
+      this.forgotEmail = '';
+    } catch (err: any) {
+      this.errorMsg = err?.message ?? 'Failed to send reset email. Please try again.';
     } finally {
       this.loading = false;
     }

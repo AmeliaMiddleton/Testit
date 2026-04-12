@@ -7,7 +7,9 @@ import { BehaviorSubject } from 'rxjs';
 export class AuthService {
   private supabase: SupabaseClient;
   private sessionSubject = new BehaviorSubject<Session | null>(null);
+  private recoverySubject = new BehaviorSubject<boolean>(false);
   session$ = this.sessionSubject.asObservable();
+  recoverySession$ = this.recoverySubject.asObservable();
 
   constructor() {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
@@ -18,8 +20,11 @@ export class AuthService {
     this.supabase.auth.getSession().then(({ data }) => {
       this.sessionSubject.next(data.session);
     });
-    this.supabase.auth.onAuthStateChange((_, session) => {
+    this.supabase.auth.onAuthStateChange((event, session) => {
       this.sessionSubject.next(session);
+      if (event === 'PASSWORD_RECOVERY') {
+        this.recoverySubject.next(true);
+      }
     });
   }
 
@@ -50,5 +55,15 @@ export class AuthService {
 
   async signOut() {
     return this.supabase.auth.signOut();
+  }
+
+  async resetPasswordForEmail(email: string) {
+    return this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+  }
+
+  async updatePassword(newPassword: string) {
+    return this.supabase.auth.updateUser({ password: newPassword });
   }
 }
